@@ -6,7 +6,15 @@ const PORT = process.env.PORT || 5003;
 const sequelize = require('./config/database');
 
 app.use(express.json());
-app.use(cors());
+
+// CORS configuration for production
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+        ? [process.env.FRONTEND_URL, 'https://your-frontend-domain.com'] 
+        : true,
+    credentials: true
+};
+app.use(cors(corsOptions));
 
 const leadRoutes = require('./routes/leadRoutes');
 app.use('/api/leads', leadRoutes);
