@@ -26,7 +26,7 @@ const Lead = sequelize.define('Lead', {
         type: DataTypes.INTEGER,
         defaultValue: null,
     },
-    assignment: {
+    assignedTo: {
         type: DataTypes.STRING,
         defaultValue: null,
     },

@@ -28,6 +28,8 @@ import {
   DialogContent,
   DialogActions,
   Chip,
+  Badge,
+  Tooltip,
 } from '@mui/material';
 import GroupIcon from '@mui/icons-material/Group';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
@@ -37,10 +39,39 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import StarIcon from '@mui/icons-material/Star';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import './App.css';
 
 const drawerWidth = 220;
 const API_URL = 'http://localhost:5003/api/leads';
+
+// Helper function to get assignment styling
+const getAssignmentStyle = (assignedTo) => {
+  if (!assignedTo) return { color: 'default', textColor: '#666' };
+  
+  switch (assignedTo) {
+    case 'Senior Sales Rep':
+      return { 
+        color: 'success', 
+        textColor: '#2e7d32'  // Green
+      };
+    case 'Junior Sales Rep':
+      return { 
+        color: 'warning', 
+        textColor: '#ef6c00'  // Orange
+      };
+    case 'Nurture Later':
+      return { 
+        color: 'info', 
+        textColor: '#1976d2'  // Blue
+      };
+    default:
+      return { color: 'default', textColor: '#666' };
+  }
+};
 
 
 function App() {
@@ -243,8 +274,38 @@ function App() {
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </Paper>
       <Paper elevation={2} sx={{ p: 3, borderRadius: 3, width: '100%', maxWidth: '95vw', minHeight: 320, transition: 'min-height 0.2s', overflow: 'auto' }}>
-        <Typography variant="h6" sx={{ mb: 2, color: '#0176d3' }}>Leads</Typography>
-        <TableContainer sx={{ minWidth: 900 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h6" sx={{ color: '#0176d3' }}>Leads Dashboard</Typography>
+          
+          {/* Assignment Summary */}
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Chip
+              icon={<StarIcon sx={{ fontSize: 16 }} />}
+              label={`Senior: ${leads.filter(l => l.assignedTo === 'Senior Sales Rep').length}`}
+              size="small"
+              sx={{ backgroundColor: '#e8f5e8', color: '#2e7d32', fontWeight: 600 }}
+            />
+            <Chip
+              icon={<TrendingUpIcon sx={{ fontSize: 16 }} />}
+              label={`Junior: ${leads.filter(l => l.assignedTo === 'Junior Sales Rep').length}`}
+              size="small"
+              sx={{ backgroundColor: '#fff3e0', color: '#ef6c00', fontWeight: 600 }}
+            />
+            <Chip
+              icon={<AccessTimeIcon sx={{ fontSize: 16 }} />}
+              label={`Nurture: ${leads.filter(l => l.assignedTo === 'Nurture Later').length}`}
+              size="small"
+              sx={{ backgroundColor: '#e3f2fd', color: '#1976d2', fontWeight: 600 }}
+            />
+            <Chip
+              label={`Unassigned: ${leads.filter(l => !l.assignedTo).length}`}
+              size="small"
+              variant="outlined"
+              sx={{ color: '#666', borderColor: '#ddd', fontWeight: 600 }}
+            />
+          </Box>
+        </Box>
+        <TableContainer sx={{ minWidth: 1100 }}>
           <Table>
             <TableHead sx={{ background: '#eaf4fb' }}>
               <TableRow>
@@ -254,6 +315,7 @@ function App() {
                 <TableCell sx={{ minWidth: 80 }} align="center">Interest Level</TableCell>
                 <TableCell sx={{ minWidth: 150 }}>Description</TableCell>
                 <TableCell sx={{ minWidth: 80 }} align="center">Score</TableCell>
+                <TableCell sx={{ minWidth: 140 }} align="center">Assigned To</TableCell>
                 <TableCell sx={{ minWidth: 160, width: 160 }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -342,6 +404,33 @@ function App() {
                       <span style={{ color: '#999' }}>-</span>
                     )}
                   </TableCell>
+                  <TableCell sx={{ minWidth: 140, width: 140 }} align="center">
+                    {lead.assignedTo ? (
+                      <Tooltip title={`Assigned to ${lead.assignedTo}`} arrow>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: getAssignmentStyle(lead.assignedTo).textColor,
+                            fontWeight: 600,
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          {lead.assignedTo}
+                        </Typography>
+                      </Tooltip>
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        sx={{ 
+                          color: '#666',
+                          fontSize: '0.875rem',
+                          fontStyle: 'italic'
+                        }}
+                      >
+                        Unassigned
+                      </Typography>
+                    )}
+                  </TableCell>
                   <TableCell sx={{ minWidth: 160, width: 160 }} align="center">
                     {editingId === lead.id ? (
                       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
@@ -379,15 +468,23 @@ function App() {
                         >
                           <EditIcon />
                         </IconButton>
-                        <IconButton
-                          color="warning"
-                          onClick={() => handleScore(lead.id)}
-                          size="small"
-                          disabled={loading}
-                          title="Score with AI"
-                        >
-                          <AutoAwesomeIcon />
-                        </IconButton>
+                        <Tooltip title={lead.score ? "Re-score with AI" : "Score with AI & Auto-assign"} arrow>
+                          <IconButton
+                            color="warning"
+                            onClick={() => handleScore(lead.id)}
+                            size="small"
+                            disabled={loading}
+                            sx={{
+                              backgroundColor: lead.score ? '#fff3e0' : '#e3f2fd',
+                              '&:hover': {
+                                backgroundColor: lead.score ? '#ffcc02' : '#1976d2',
+                                color: 'white'
+                              }
+                            }}
+                          >
+                            <AutoAwesomeIcon />
+                          </IconButton>
+                        </Tooltip>
                         <IconButton
                           color="error"
                           onClick={() => setDeleteDialog({ open: true, leadId: lead.id })}
@@ -417,6 +514,41 @@ function App() {
               <Typography variant="body1" sx={{ mb: 1 }}><strong>Source:</strong> {viewDialog.lead.source}</Typography>
               <Typography variant="body1" sx={{ mb: 1 }}><strong>Interest Level:</strong> {viewDialog.lead.interestLevel}</Typography>
               <Typography variant="body1" sx={{ mb: 1 }}><strong>Description:</strong> {viewDialog.lead.description}</Typography>
+              
+              {/* Score and Assignment Section */}
+              <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: '#f8f9fa', borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1, color: '#0176d3' }}>AI Analysis & Assignment</Typography>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body1"><strong>AI Score:</strong></Typography>
+                  {viewDialog.lead.score != null ? (
+                    <Chip 
+                      label={viewDialog.lead.score} 
+                      color={viewDialog.lead.score >= 70 ? 'success' : viewDialog.lead.score >= 40 ? 'warning' : 'error'}
+                      size="small"
+                    />
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">Not scored yet</Typography>
+                  )}
+                </Box>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  <Typography variant="body1"><strong>Assigned To:</strong></Typography>
+                  {viewDialog.lead.assignedTo ? (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: getAssignmentStyle(viewDialog.lead.assignedTo).textColor,
+                        fontWeight: 600,
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      {viewDialog.lead.assignedTo}
+                    </Typography>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">Not assigned yet</Typography>
+                  )}
+                </Box>
+              </Box>
+              
               <Typography variant="body1" sx={{ mb: 1 }}><strong>Created:</strong> {new Date(viewDialog.lead.createdAt).toLocaleString()}</Typography>
               <Typography variant="body1"><strong>Updated:</strong> {new Date(viewDialog.lead.updatedAt).toLocaleString()}</Typography>
             </Box>

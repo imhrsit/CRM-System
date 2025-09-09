@@ -1,5 +1,6 @@
 const Lead = require('../models/Lead');
 const aiService = require('../services/aiService');
+const AssignmentService = require('../services/assignmentService');
 
 // Create a new lead
 exports.createLead = async (req, res) => {
@@ -56,21 +57,36 @@ exports.deleteLead = async (req, res) => {
     }
 };
 
-// Score a lead using Gemini AI
+// Score a lead using Gemini AI and auto-assign
 exports.scoreLead = async (req, res) => {
     try {
         const lead = await Lead.findByPk(req.params.id);
         if (!lead) return res.status(404).json({ error: 'Lead not found' });
 
-        console.log(`Scoring lead: ${lead.name} (ID: ${lead.id})`);
+        console.log(`\n🎯 Starting scoring process for: ${lead.name} (ID: ${lead.id})`);
+        
+        // Step 1: Generate AI score
         const score = await aiService.generateLeadScore(lead);
-        await lead.update({ score: score });
+        console.log(`📊 Generated score: ${score}`);
+        
+        // Step 2: Auto-assign based on score
+        const result = AssignmentService.processAssignment(score, lead.name);
+        
+        // Step 3: Update lead with both score and assignment
+        await lead.update({
+            score: result.score,
+            assignedTo: result.assignedTo
+        });
+
+        console.log(`Updated lead in database`);
+        console.log(`Process complete!\n`);
 
         res.json({
-            message: 'Lead scored successfully',
+            message: result.message,
             leadId: lead.id,
             leadName: lead.name,
-            score: score
+            score: result.score,
+            assignedTo: result.assignedTo
         });
     } catch (error) {
         console.error('Error scoring lead:', error);

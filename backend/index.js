@@ -8,7 +8,6 @@ const sequelize = require('./config/database');
 app.use(express.json());
 app.use(cors());
 
-// Lead routes
 const leadRoutes = require('./routes/leadRoutes');
 app.use('/api/leads', leadRoutes);
 
@@ -16,7 +15,6 @@ app.get('/', (req, res) => {
     res.send('CRM Backend is running');
 });
 
-// Sync database and start server
 sequelize.sync()
     .then(() => {
         console.log('Database synced');
