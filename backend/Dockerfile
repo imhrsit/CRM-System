@@ -10,8 +10,8 @@ RUN apk add --no-cache curl
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies using npm ci for production
-RUN npm ci --omit=dev && npm cache clean --force
+# Install dependencies - handle missing package-lock.json gracefully
+RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi && npm cache clean --force
 
 # Copy source code
 COPY . .
