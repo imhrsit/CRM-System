@@ -33,3 +33,7 @@ sequelize.sync()
     .catch((err) => {
         console.error('Unable to sync database:', err);
     });
+
+module.exports = app;
+
+
