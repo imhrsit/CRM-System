@@ -10,26 +10,29 @@ RUN apk add --no-cache curl
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies - handle missing package-lock.json gracefully
-RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi && npm cache clean --force
+# Install dependencies (fallback if no lock file)
+RUN if [ -f package-lock.json ]; then \
+      npm ci --omit=dev; \
+    else \
+      npm install --omit=dev; \
+    fi && npm cache clean --force
 
-# Copy source code
+# Copy the rest of the source code
 COPY . .
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN addgroup -g 1001 -S nodejs \
+  && adduser -S nodejs -u 1001 \
+  && chown -R nodejs:nodejs /app
 
-# Change ownership of app directory
-RUN chown -R nodejs:nodejs /app
 USER nodejs
 
-# Expose port (Railway will set PORT env var)
-EXPOSE $PORT
+# Expose default app port (Railway overrides with $PORT at runtime)
+EXPOSE 3000
 
-# Health check
+# Health check on default port (use Railway's PORT env var at runtime)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:$PORT/ || exit 1
+  CMD curl -f http://localhost:3000/ || exit 1
 
 # Start the application
 CMD ["npm", "start"]
