@@ -36,6 +36,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import './App.css';
 
 const drawerWidth = 220;
@@ -155,6 +156,22 @@ function App() {
     }
   };
 
+  // Score lead with AI
+  const handleScore = async (id) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/${id}/score`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Failed to score lead');
+      await fetchLeads();
+      setError('');
+    } catch (err) {
+      setError('Failed to score lead: ' + err.message);
+    }
+    setLoading(false);
+  };
+
   // Handle view lead
   const handleView = async (id) => {
     const lead = await fetchLeadById(id);
@@ -227,7 +244,7 @@ function App() {
       </Paper>
       <Paper elevation={2} sx={{ p: 3, borderRadius: 3, width: '100%', maxWidth: '95vw', minHeight: 320, transition: 'min-height 0.2s', overflow: 'auto' }}>
         <Typography variant="h6" sx={{ mb: 2, color: '#0176d3' }}>Leads</Typography>
-        <TableContainer sx={{ minWidth: 800 }}>
+        <TableContainer sx={{ minWidth: 900 }}>
           <Table>
             <TableHead sx={{ background: '#eaf4fb' }}>
               <TableRow>
@@ -236,7 +253,8 @@ function App() {
                 <TableCell sx={{ minWidth: 100 }}>Source</TableCell>
                 <TableCell sx={{ minWidth: 80 }} align="center">Interest Level</TableCell>
                 <TableCell sx={{ minWidth: 150 }}>Description</TableCell>
-                <TableCell sx={{ minWidth: 140, width: 140 }} align="center">Actions</TableCell>
+                <TableCell sx={{ minWidth: 80 }} align="center">Score</TableCell>
+                <TableCell sx={{ minWidth: 160, width: 160 }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -293,12 +311,9 @@ function App() {
                         fullWidth
                       />
                     ) : (
-                      <Chip 
-                        label={lead.interestLevel} 
-                        color={lead.interestLevel >= 7 ? 'success' : lead.interestLevel >= 4 ? 'warning' : 'default'}
-                        size="small"
-                        sx={{ minWidth: 40, width: 40, height: 40, borderRadius: 1 }}
-                      />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {lead.interestLevel}
+                      </Typography>
                     )}
                   </TableCell>
                   <TableCell sx={{ minWidth: 150, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -315,7 +330,19 @@ function App() {
                       <span title={lead.description}>{lead.description}</span>
                     )}
                   </TableCell>
-                  <TableCell sx={{ minWidth: 140, width: 140 }} align="center">
+                  <TableCell sx={{ minWidth: 80, width: 80 }} align="center">
+                    {lead.score != null ? (
+                      <Chip 
+                        label={lead.score} 
+                        color={lead.score >= 70 ? 'success' : lead.score >= 40 ? 'warning' : 'error'}
+                        size="small"
+                        sx={{ minWidth: 45, width: 45, height: 30, borderRadius: 1 }}
+                      />
+                    ) : (
+                      <span style={{ color: '#999' }}>-</span>
+                    )}
+                  </TableCell>
+                  <TableCell sx={{ minWidth: 160, width: 160 }} align="center">
                     {editingId === lead.id ? (
                       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
                         <IconButton
@@ -340,6 +367,7 @@ function App() {
                           color="primary"
                           onClick={() => handleView(lead.id)}
                           size="small"
+                          title="View Details"
                         >
                           <VisibilityIcon />
                         </IconButton>
@@ -347,13 +375,24 @@ function App() {
                           color="primary"
                           onClick={() => handleEdit(lead)}
                           size="small"
+                          title="Edit Lead"
                         >
                           <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          color="warning"
+                          onClick={() => handleScore(lead.id)}
+                          size="small"
+                          disabled={loading}
+                          title="Score with AI"
+                        >
+                          <AutoAwesomeIcon />
                         </IconButton>
                         <IconButton
                           color="error"
                           onClick={() => setDeleteDialog({ open: true, leadId: lead.id })}
                           size="small"
+                          title="Delete Lead"
                         >
                           <DeleteIcon />
                         </IconButton>
