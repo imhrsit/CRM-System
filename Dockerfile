@@ -7,8 +7,8 @@ WORKDIR /app
 # Install curl for health checks
 RUN apk add --no-cache curl
 
-# Copy package files first for better caching
-COPY package*.json ./
+# Copy package files from backend first for better caching
+COPY backend/package*.json ./
 
 # Install dependencies (fallback if no lock file)
 RUN if [ -f package-lock.json ]; then \
@@ -17,8 +17,8 @@ RUN if [ -f package-lock.json ]; then \
       npm install --omit=dev; \
     fi && npm cache clean --force
 
-# Copy the rest of the source code
-COPY . .
+# Copy backend source code
+COPY backend ./
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs \
@@ -30,7 +30,7 @@ USER nodejs
 # Expose default app port (Railway overrides with $PORT at runtime)
 EXPOSE 3000
 
-# Health check on default port (use Railway's PORT env var at runtime)
+# Health check on default port
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3000/ || exit 1
 
