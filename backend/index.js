@@ -7,7 +7,6 @@ const sequelize = require('./config/database');
 
 app.use(express.json());
 
-// CORS configuration for production
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
         ? [process.env.FRONTEND_URL, 'https://your-frontend-domain.com'] 
@@ -33,7 +32,5 @@ sequelize.sync()
     .catch((err) => {
         console.error('Unable to sync database:', err);
     });
-
-module.exports = app;
 
 
